@@ -11,27 +11,30 @@ datasource db {
 }
 
 model User {
-  id        String  @default(uuid()) @id
-  email     String  @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   name      String
   password  String
-  fromMails Mail[]  @relation("fromMails")
-  toMails   Mail[]  @relation("toMails")
-  isAdmin   Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  mails     Mail[]    @relation("mails")
+  role      UserRole  @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
   deleteAt  DateTime?
 }
 
-model Mail{
-  id        String   @default(uuid()) @id
+model Mail {
+  id        String    @id @default(uuid())
   fromId    String
-  from      User    @relation("fromMails", fields: [fromId], references: [id])
-  toId      String
-  to        User    @relation("toMails", fields: [toId], references: [id])
+  from      User      @relation("mails", fields: [fromId], references: [id])
+  to        String
   subject   String
   body      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
   deleteAt  DateTime?
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }

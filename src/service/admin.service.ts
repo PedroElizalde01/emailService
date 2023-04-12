@@ -1,31 +1,21 @@
-import { getTokenUser } from "../utils/jwt";
+import { StatsResponseDto } from "../models/dto/stats-response.dto";
 import { AdminRepository } from "../repositories/admin.repository";
-import { UserRole } from "../models/entities/user.entity";
-import { Request } from "express";
-import { UnauthorizedError } from "../error/errors";
+import { UserDTO } from "../models/dto/user.dto";
 
 export class AdminService {
     constructor(private readonly adminRepository : AdminRepository) {}
 
-    async getAllUsers(req: Request) {
-        const tokenUser = await getTokenUser(req)
-        console.log(tokenUser)
-        if (tokenUser.role !== UserRole.ADMIN) throw new UnauthorizedError("You are not an admin")
-        return await this.adminRepository.getAllUsers()
-    }
-
-    async getStats(req:Request){
-        const tokenUser = await getTokenUser(req)
-        if(tokenUser.role !== UserRole.ADMIN) throw new UnauthorizedError("You are not an admin")
+    async getStats(): Promise<StatsResponseDto[]>{
         const stats = await this.adminRepository.getStatsUser()
         return stats
     }
 
+    async getAllUsers() : Promise<UserDTO[]>{ // parameters?
+        return await this.adminRepository.getAllUsers()
+    }
+
     //logical delete user
-    async deleteUserService(req: Request) { //when delete, i dont remove data, so a new user with same email wont be created
-        const tokenUser = await getTokenUser(req)
-        
-        if (tokenUser.role !== UserRole.ADMIN) throw new UnauthorizedError("You are not an admin")
-        return await this.adminRepository.deleteUser({email: req.body.email})
-}
+    async deleteUserService(emailToDelete:string): Promise<UserDTO> { //when delete, i dont remove data, so a new user with same email wont be created
+        return await this.adminRepository.deleteUser({email: emailToDelete})
+    }
 }

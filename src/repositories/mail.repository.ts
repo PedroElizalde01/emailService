@@ -2,12 +2,13 @@ import { prismaErrorHandler } from '../error/prismaErrorHandler';
 import { PrismaClient } from '@prisma/client'
 import { StatsResponseDto } from 'models/dto/stats-response.dto';
 import { Mail } from '../models/entities/mail.entity'
+import { MailFormDTO, MailResponseDTO } from 'models/dto/mail.dto';
 
 const prisma = new PrismaClient()
 
 export class MailRepository{
 
-    async sendMail ({fromId, to, subject, body}: {fromId: string, to: string, subject: string, body: string}): Promise<Mail> {
+    async sendMail ({fromId, to, subject, body}: {fromId: string, to: string, subject: string, body: string}): Promise<MailFormDTO> {
         let mail;
         try {
             mail = await prisma.mail.create({
@@ -24,7 +25,7 @@ export class MailRepository{
         return mail;
     }
 
-    async getReceived (userId: string): Promise<any>{
+    async getReceived (userId: string): Promise<MailResponseDTO[]>{
         return await prisma.mail.findMany({
             where: {
                 deleteAt: null,
@@ -46,7 +47,7 @@ export class MailRepository{
         });
     }
 
-    async getSent (userId: string): Promise<any>{
+    async getSent (userId: string): Promise<MailResponseDTO[]>{
         return await prisma.mail.findMany({
             where: {
                 deleteAt: null,
@@ -81,22 +82,5 @@ export class MailRepository{
             }
         })
         return mailsSentToday;
-    }
-
-    async deleteMail ({id}: {id: string}): Promise<Mail>{
-        let mail;
-        try{
-            mail = await prisma.mail.update({
-                where: {
-                    id,
-                },
-                data: {
-                    deleteAt: new Date(),
-                },
-            });
-        } catch (e) {
-            console.log(e);
-        }
-        return mail;
     }
 }   

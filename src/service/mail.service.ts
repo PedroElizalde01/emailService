@@ -1,37 +1,26 @@
-import { getTokenUser } from '../utils/jwt'
 import { MailRepository } from '../repositories/mail.repository'
 import { UserRepository } from '../repositories/user.repository'
-import { Request } from 'express'
 import { UnauthorizedError} from '../error/errors';
+import { MailFormDTO, MailResponseDTO } from '../models/dto/mail.dto';
 
 export class MailService{
     constructor(
         private readonly mailRepository: MailRepository,
-        private readonly userRepository: UserRepository) {}
+        private readonly userRepository: UserRepository
+    ) {}
 
-    async sendMail(req:Request){
-        const tokenUser = await getTokenUser(req)
-        const mailsSentToday = await this.mailRepository.getQuantitySentToday(tokenUser.id)
-        console.log(mailsSentToday)
+    async sendMail(mailForm:MailFormDTO) : Promise<MailFormDTO>{
+        const mailsSentToday = await this.mailRepository.getQuantitySentToday(mailForm.fromId)
         if(mailsSentToday >= 1000) throw new UnauthorizedError("You have reached the limit of mails sent today")
-        const reciever = await this.userRepository.userByEmail({email: req.body.to})
-        return await this.mailRepository.sendMail({fromId: tokenUser.id, to: reciever.id, subject: req.body.subject, body: req.body.body})
+        const reciever = await this.userRepository.userByEmail({email: mailForm.to})
+        return await this.mailRepository.sendMail({fromId: mailForm.fromId, to: reciever.id, subject: mailForm.subject, body: mailForm.body})
     }
 
-    async getMailsReceived(req: Request){
-        const tokenUser = await getTokenUser(req)
-        return await this.mailRepository.getReceived(tokenUser.id)
+    async getMailsReceived(id:string): Promise<MailResponseDTO[]>{
+        return await this.mailRepository.getReceived(id)
     }
 
-    async getMailsSent(req: Request){
-        const tokenUser = await getTokenUser(req)
-        return await this.mailRepository.getSent(tokenUser.id)
-    }
-
-    async deleteMail(req: Request){
-        const tokenUser = await getTokenUser(req)
-        //if (tokenUser.role !== UserRole.ADMIN) throw new UnauthorizedError("You are not an admin")
-        
-        return await this.mailRepository.deleteMail({id: req.body.id})
+    async getMailsSent(id:string): Promise<MailResponseDTO[]>{
+        return await this.mailRepository.getSent(id)
     }
 }

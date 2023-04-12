@@ -1,43 +1,10 @@
 import { PrismaClient } from '@prisma/client'
-import { User } from '../models/entities/user.entity';
+import { UserDTO } from '../models/dto/user.dto';
 import { StatsResponseDto } from '../models/dto/stats-response.dto';
 
 const prisma = new PrismaClient();
 
 export class AdminRepository{
-
-    //get all users
-    async getAllUsers(): Promise<any>{
-        return await prisma.user.findMany({
-            where: {
-                deleteAt: null,
-            },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-            },
-        });
-    }   
-    
-    //logic delete user
-    async deleteUser({email}:{email:string}): Promise<User>{
-        let user;
-        try {
-            user = await prisma.user.update({
-                where: {
-                    email,
-                },
-                data: {
-                    deleteAt: new Date(),
-                },
-            });
-        } catch (e) {
-            console.log(e);
-        }
-        return user;
-    }
 
     //stats
     async getStatsUser(): Promise<StatsResponseDto[]> {
@@ -69,8 +36,6 @@ export class AdminRepository{
                 },
             },
         })
-        console.log(users)
-
         return users.map(user => {
             return {
                 name: user.name,
@@ -78,5 +43,39 @@ export class AdminRepository{
                 mailsSentToday: user.mails.length,
             }
         })        
+    }
+
+    //get all users
+    async getAllUsers(): Promise<UserDTO[]>{
+        return await prisma.user.findMany({
+            where: {
+                deleteAt: null,
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+            },
+        });
+    }   
+    
+
+    //logic delete user
+    async deleteUser({email}:{email:string}): Promise<UserDTO>{
+        let user;
+        try {
+            user = await prisma.user.update({
+                where: {
+                    email,
+                },
+                data: {
+                    deleteAt: new Date(),
+                },
+            });
+        } catch (e) {
+            console.log(e);
+        }
+        return user;
     }
 }

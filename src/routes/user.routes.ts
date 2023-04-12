@@ -2,57 +2,58 @@ import express from 'express';
 import { BadRequestError, InternalServerError } from '../error/errors'
 import { UserRepository } from '../repositories/user.repository';
 import { UserService } from '../service/user.service';
+import { checkEmail } from '../utils/regex';
+import { getTokenUser, authenticateToken } from '../utils/jwt';
 
 const router = express.Router();
 
 const userService: UserService = new UserService(new UserRepository)
 
-//register
 router.post('/register', async(req, res) => {
     try {
         if(!req.body.email || !req.body.name || !req.body.password) {
             throw new BadRequestError("Missing fields")
         }
+        if(!checkEmail(req.body.email)) res.status(400).json({message: "Invalid email"})
         res.status(201).json(await userService.registerUser(req.body))
     }
     catch(e) {
         console.log(e)
-        throw new InternalServerError()
+        // throw new InternalServerError()
+        res.status(500).json({message: "Internal server error"})
     }
     
 });
 
-//login
-router.post('/login', async(req, res) => {
+router.post('/login', async(req, res)=> {
     try {
         if(!req.body.email || !req.body.password) {
             throw new BadRequestError("Missing fields")
         }
-        res.status(200).json(await userService.loginUser(req.body))
+        res.status(201).json(await userService.loginUser({email:req.body.email, password:req.body.password}))
     } catch(e) {
         console.log(e)
-        throw new InternalServerError()
-    }
+        // throw new InternalServerError()
+        res.status(500).json({message: "Internal server error"})    }
 })
 
-//get me
-router.get('/me', async (req, res) => {
+router.get('/me',authenticateToken, async (req, res) => {
     try{
-        res.json(await userService.getMe(req))
+        res.status(200).json(await getTokenUser(req))
     }catch(e){
         console.log(e)
-        throw new InternalServerError()
-    }
+        // throw new InternalServerError()
+        res.status(500).json({message: "Internal server error"})    }
 })
 
-// edit me
-router.put('/edit', async (req, res) => {
+router.put('/edit',authenticateToken, async (req, res) => {
     try{
-        res.json(await userService.editMe(req))
+        const tokenUser = await getTokenUser(req)
+        res.status(200).json(await userService.editMe(tokenUser.id, {name: req.body.name, password: req.body.password}))
     }catch(e){
         console.log(e)
-        throw new InternalServerError()
-    }
+        // throw new InternalServerError()
+        res.status(500).json({message: "Internal server error"})    }
 })
 
 export { router as UserRouter }

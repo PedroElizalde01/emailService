@@ -6,7 +6,6 @@ const prisma = new PrismaClient()
 
 export class UserRepository {
     
-    //register
     async registerUser ({email, name, password, role}: {email: string, name: string, password: string, role:UserRole}): Promise<User> {
         let user;
         try {
